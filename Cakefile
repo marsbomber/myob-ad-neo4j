@@ -1,6 +1,7 @@
 fs            = require 'fs'
 {print}       = require 'util'
 {spawn, exec} = require 'child_process'
+csv           = require 'ya-csv'
 
 # ANSI Terminal Colors
 bold  = '\x1B[0;1m'
@@ -72,22 +73,18 @@ task 'dev', 'start dev env', ->
   supervisor.stderr.pipe process.stderr
   log 'Watching js files and running server', green
   
-task 'db:seed', 'Populate graph database with seed data', ->
-  neo4j = require 'neo4j'
-  db = new neo4j.GraphDatabase 'http://localhost:7474'
-  node = db.createNode
-    'hello': 'world'
-  node.save (err) ->
-    print err if err
-    
+task 'db:seed', 'Populate graph database with seed data', ->  
+  log "Start Seeding ...", bold      
   # 1. load financial years (one node per record)
   # 2. load relation (one node per record)
   # 3. load referral (one node per record)
   # 4. load stock
   # 5. load partner
-    
-      
-  print "todo\n"
+  # 6. load other entities ... 
+  # 7. make relationship sound
+  
+  db_seed_stocks -> 
+    log "done", green
 
 task 'db:clean', 'Clear out existing data', ->
   print "todo\n"
@@ -95,4 +92,26 @@ task 'db:clean', 'Clear out existing data', ->
 task 'db:reseed', 'Clear out existing data, and seed', ->
   print "todo\n"
   
+read_csv = (file, next, callback) ->
+  reader = csv.createCsvFileReader file,
+    'separator': ','
+    'quote': ''
+    'escape': ''
+    'comment': ''
+
+  reader.addListener 'data', (data) ->
+    callback(data)
+
+  reader.addListener 'end', ->
+    log "  done", green
+    next()
+
+db_seed_stocks = (next) ->
+  log "  - Seeding Stocks", reset
+  Stock = require './app/models/stock'
   
+  read_csv './db/fixtures/Stock.csv', next, (data) ->
+    Stock.create_from_csv data, (error, stock) ->
+      if error
+        log error, red 
+
