@@ -1,6 +1,7 @@
 express = require 'express'
 stylus = require 'stylus'
 assets = require 'connect-assets'
+controllers = require '../app/controllers'
 
 app = express()
 # Add Connect Assets
@@ -10,6 +11,9 @@ app.set 'view engine', 'jade'
 # Get root_path return index view
 app.get '/', (req, resp) -> 
   resp.render 'index'
+
+app.get '/stocks', controllers.stocks.list
+
 # Define Port
 port = process.env.PORT or process.env.VMC_APP_PORT or 3000
 # Start Server
